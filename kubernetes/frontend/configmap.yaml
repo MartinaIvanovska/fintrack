@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: fintrack
+
+# NOTE: REACT_APP_* env vars are baked in at Docker build time (not runtime).
+# The API URL is handled by nginx proxying /api to the backend service.
+# This ConfigMap is kept for reference but the env var has no runtime effect.
+data:
+  REACT_APP_API_URL: /api

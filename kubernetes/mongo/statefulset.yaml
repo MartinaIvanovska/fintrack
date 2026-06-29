@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+  namespace: fintrack
+
+spec:
+  serviceName: mongo
+
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: mongo
+
+  template:
+    metadata:
+      labels:
+        app: mongo
+
+    spec:
+      containers:
+      - name: mongo
+        image: mongo:7.0
+
+        ports:
+        - containerPort: 27017
+
+        envFrom:
+          - configMapRef:
+              name: mongo-config
+
+        volumeMounts:
+        - name: mongo-storage
+          mountPath: /data/db
+
+        - name: mongo-init
+          mountPath: /docker-entrypoint-initdb.d/init.js
+          subPath: init.js
+
+      volumes:
+        - name: mongo-init
+          configMap:
+            name: mongo-init
+
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-storage
+
+    spec:
+      accessModes:
+      - ReadWriteOnce
+
+      resources:
+        requests:
+          storage: 2Gi
