@@ -5,6 +5,7 @@ metadata:
   namespace: fintrack
 
 spec:
+  clusterIP: None
   selector:
     app: mongo
 

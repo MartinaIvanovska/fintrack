@@ -4,4 +4,4 @@ metadata:
   name: backend-config
   namespace: fintrack
 data:
-  MONGO_URI: mongodb://mongo:27017
+  MONGO_URI: mongodb://mongo-0.mongo:27017,mongo-1.mongo:27017,mongo-2.mongo:27017/finance_tracker?replicaSet=rs0

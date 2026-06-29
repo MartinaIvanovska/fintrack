@@ -7,11 +7,13 @@ metadata:
 spec:
   serviceName: mongo
 
-  replicas: 1
+  replicas: 3
 
   selector:
     matchLabels:
       app: mongo
+
+  podManagementPolicy: OrderedReady  
 
   template:
     metadata:
@@ -22,6 +24,11 @@ spec:
       containers:
       - name: mongo
         image: mongo:7.0
+        command:
+          - mongod
+          - "--replSet"
+          - "rs0"
+          - "--bind_ip_all"
 
         ports:
         - containerPort: 27017
