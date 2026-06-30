@@ -28,7 +28,7 @@ services:
       - "8000:8000"
     environment:
       MONGO_URI: mongodb://mongo:27017
-      SECRET_KEY: change-this-secret-key-in-production-please
+      SECRET_KEY: ${SECRET_KEY}
     depends_on:
       mongo:
         condition: service_healthy
