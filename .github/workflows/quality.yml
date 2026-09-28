@@ -1,0 +1,65 @@
+# Slower quality checks that don't need to run on every push: mutation
+# testing and the load test. Started by hand from the Actions tab
+# ("Run workflow", on any branch) and once a week on the default branch.
+name: Quality
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1" # Mondays 03:00 UTC
+
+permissions:
+  contents: read
+
+jobs:
+  mutation:
+    name: Mutation testing (mutmut)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - run: pip install -r requirements-dev.txt
+      - run: mutmut run
+      - name: Surviving mutants
+        run: |
+          mutmut results | tee mutmut-results.txt
+          {
+            echo "### Surviving mutants"
+            echo '```'
+            cat mutmut-results.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mutmut-results
+          path: backend/mutmut-results.txt
+          if-no-files-found: ignore
+
+  load-test:
+    name: Load test (Locust)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start the stack
+        run: |
+          echo "SECRET_KEY=$(openssl rand -hex 32)" > .env
+          docker compose up -d --build
+          timeout 120 bash -c "until curl -fs http://localhost:8000/health > /dev/null; do sleep 2; done"
+      - name: Run Locust (fails if the acceptance criteria in perf/locustfile.py are missed)
+        run: docker compose --profile perf run --rm locust
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: locust-report
+          path: perf/results/
+          if-no-files-found: ignore
+      - if: always()
+        run: docker compose down -v

@@ -1,0 +1,3 @@
+# Locust output (CSV statistics, HTML report) is generated per run.
+*
+!.gitignore
