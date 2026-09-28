@@ -16,12 +16,19 @@ const BudgetsPage: React.FC = () => {
   const [form, setForm] = useState({ category_id: '', limit_amount: '' });
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
-    setLoading(true);
-    const res = await api.get('/api/budgets', { params: { month_year: monthYear } });
+ const load = async () => {
+  setLoading(true);
+
+  try {
+    const res = await api.get('/api/budgets', {
+      params: { month_year: monthYear },
+    });
+
     setBudgets(res.data);
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   useEffect(() => { load(); }, [monthYear]);
   useEffect(() => {

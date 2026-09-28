@@ -1,0 +1,18 @@
+# Tool configuration for the backend (dependencies stay in requirements*.txt).
+
+[tool.bandit]
+# Scan the application only; tests intentionally use asserts, fixed test
+# secrets and throwaway servers.
+exclude_dirs = ["tests", ".venv", "venv"]
+
+[tool.mutmut]
+# Mutation testing: mutmut makes small deliberate changes ("mutants") to the
+# business logic and runs the tests against each one
+# a mutant the tests don't notice has "survived" and points at a weak or missing assertion.
+# Run with `mutmut run`, inspect with `mutmut results` / `mutmut show <name>`.
+source_paths = ["app"]
+only_mutate = ["app/routers/budgets.py", "app/routers/reports.py", "app/core/security.py"]
+# The fast tiers only: unit and property tests need no database, so each
+# mutant is checked in seconds. (Integration tests would need MongoDB per run.)
+pytest_add_cli_args_test_selection = ["tests/unit", "tests/property"]
+also_copy = ["pytest.ini"]

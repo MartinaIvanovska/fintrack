@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   mongo:
     image: mongo:7.0
@@ -45,6 +43,44 @@ services:
       - "3000:3000"
     depends_on:
       - backend
+
+  # Backend unit + integration tests. Only started when the "test" profile is requested:
+  # docker compose --profile test run --rm backend-tests
+  # Extra arguments replace the default command, e.g. docker compose --profile test run --rm backend-tests pytest tests/unit -q
+  backend-tests:
+    profiles: ["test"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      DB_NAME: finance_tracker_test
+      SECRET_KEY: test-secret-key-not-for-production
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      # Index definitions checked by tests/unit/test_index_parity.py
+      - ./mongo-init:/mongo-init:ro
+      - ./kubernetes/mongo:/kubernetes/mongo:ro
+
+  # Load test against the running backend. Only started with the "perf" profile:
+  # docker compose --profile perf run --rm locust
+  # Results (CSV + HTML report) are written to perf/results/.
+  locust:
+    profiles: ["perf"]
+    image: locustio/locust:2.46.6
+    depends_on:
+      - backend
+    volumes:
+      - ./perf:/mnt/locust
+    working_dir: /mnt/locust
+    command: >-
+      -f locustfile.py --headless --users 20 --spawn-rate 5 --run-time 60s
+      --host http://backend:8000 --only-summary
+      --csv results/fintrack --html results/fintrack.html
 
 volumes:
   mongo_data:

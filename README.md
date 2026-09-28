@@ -2,13 +2,52 @@
 
 A full-stack personal finance application built with **React**, **FastAPI**, and **MongoDB**.
 
-## Quick Start
+## Quick Setup (Linux)
+
+Requires Docker with Compose v2. Everything else runs in containers.
 
 ```bash
-docker-compose up --build
+cp .env.example .env                  # then set SECRET_KEY in .env, e.g. to the output of:
+                                      #   python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+docker compose up -d --build          # start MongoDB, backend and frontend
 ```
 
-Then open: **http://localhost:3000**
+Then open: **http://localhost:3000** (API docs: **http://localhost:8000/docs**)
+
+Run the backend tests (unit + integration) in a container:
+
+```bash
+docker compose --profile test run --rm backend-tests
+docker compose --profile test run --rm backend-tests pytest tests/unit -q   # any pytest arguments
+```
+
+Optional local Python environment (IDE support, end-to-end tests). Needs only `python3`; the script fetches
+Python 3.12 itself if it isn't installed:
+
+```bash
+./scripts/setup-venv.sh               # creates backend/.venv, installs test tools and Playwright Chromium
+source backend/.venv/bin/activate
+cd backend
+pytest                                # unit + property + integration (starts its own MongoDB container)
+pytest tests/e2e                      # browser tests against http://localhost:3000
+```
+
+Stop everything with `docker compose down` (add `-v` to also delete the MongoDB data).
+
+---
+
+## Testing
+
+548 automated tests in six tiers (unit, property-based, integration, API fuzzing, frontend components,
+end-to-end with accessibility checks), plus a load test, security scans and mutation testing. They run in CI
+on every push. Backend coverage is 100 %, frontend statement coverage 100 %.
+
+| Run | Command |
+|---|---|
+| Backend tests with coverage gate | `cd backend && pytest --cov` |
+| Frontend tests with coverage gate | `cd frontend && npm run test:coverage` |
+| API fuzzing / end-to-end | `cd backend && pytest tests/api` · `pytest tests/e2e` |
+| Load test / security scans / mutation | `docker compose --profile perf run --rm locust` · `./scripts/security-scan.sh` · `cd backend && mutmut run` |
 
 ---
 
@@ -66,10 +105,10 @@ finance-tracker/
 
 ### Backend
 ```bash
+./scripts/setup-venv.sh --no-browsers
+source backend/.venv/bin/activate
 cd backend
-pip install -r requirements.txt
-pip install pydantic-settings
-uvicorn app.main:app --reload
+SECRET_KEY=dev-only MONGO_URI=mongodb://localhost:27017 uvicorn app.main:app --reload
 ```
 
 ### Frontend
@@ -88,9 +127,9 @@ npm start
 
 ## Environment Variables
 
-**Backend** (set in docker-compose or .env):
+**Backend** (Docker Compose reads them from `.env` in the project root; see `.env.example`):
+- `SECRET_KEY` — JWT signing key, **required**: `docker compose` refuses to start without it
 - `MONGO_URI` — MongoDB connection string (default: `mongodb://mongo:27017`)
-- `SECRET_KEY` — JWT signing key (change in production!)
 
 **Frontend**:
 - `REACT_APP_API_URL` — Backend API URL (default: `http://localhost:8000`)

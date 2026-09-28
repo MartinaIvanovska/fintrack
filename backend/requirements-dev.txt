@@ -1,0 +1,27 @@
+-r requirements.txt
+
+# --- Testing ---
+pytest==8.2.2
+pytest-asyncio==0.24.0
+pytest-cov==5.0.0
+httpx==0.27.0            # already in requirements.txt, pinned here too for clarity (ASGITransport for FastAPI testing)
+pytest-env==1.1.3        # convenient env var injection for the test session
+faker==25.9.1            # realistic fake data for fixtures
+testcontainers[mongodb]==4.15.0  # throwaway MongoDB 7 container for integration tests (when MONGO_URI is unset)
+hypothesis==6.168.1      # property-based testing (generates inputs, shrinks failures to a minimal example)
+time-machine==3.5.1      # freezes the clock (datetime.utcnow etc.) for date-dependent tests
+schemathesis==3.39.16    # generates API requests from the OpenAPI schema (tests/api)
+
+# --- Security scanning ---
+bandit==1.9.4            # static analysis of app/ for common Python security issues
+pip-audit==2.10.1        # checks pinned dependencies against known vulnerabilities (PyPI advisory DB / OSV)
+
+# --- Mutation testing ---
+mutmut==3.8.0            # injects small bugs into the business logic to check the tests notice (config: pyproject.toml)
+
+# --- E2E (Playwright) ---
+# After `pip install -r requirements-dev.txt`, also run `playwright install
+# chromium` once to download the browser binary used by these tests.
+pytest-playwright==0.5.2
+playwright==1.45.0
+axe-playwright-python==0.1.8  # axe-core accessibility (WCAG) checks inside Playwright

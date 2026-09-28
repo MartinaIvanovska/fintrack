@@ -1,0 +1,27 @@
+# Coverage settings used by pytest-cov. Enable with `pytest --cov`
+# (the source package and all options below come from this file).
+
+[run]
+source = app
+# Branch coverage: an `if` counts as covered only when both its true and
+# false paths have run, not just the line itself.
+branch = True
+# Paths in coverage.xml relative to backend/, so CI tools can map them.
+relative_files = True
+
+[report]
+# Coverage gate: `pytest --cov` fails if total coverage drops below this.
+fail_under = 100
+show_missing = True
+# Empty __init__.py files have nothing to cover; leave them out of the table.
+skip_empty = True
+precision = 1
+exclude_also =
+    if __name__ == .__main__.:
+    raise NotImplementedError
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml
